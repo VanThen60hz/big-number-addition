@@ -1,15 +1,12 @@
 package mybignumber
 
 import (
-	"strings"
-
 	log "github.com/sirupsen/logrus"
 )
 
 type MyBigNumber struct{}
 
 func init() {
-	// Configure logrus
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
@@ -21,17 +18,16 @@ func (m *MyBigNumber) Sum(str1, str2 string) string {
 		str1, str2 = str2, str1
 	}
 
-	s1 := reverse(str1)
-	s2 := reverse(str2)
+	len1, len2 := len(str1), len(str2)
+	result := make([]byte, len1+1)
+	currentPos := len(result) - 1
 
-	var result strings.Builder
 	carry := 0
-
-	for i := 0; i < len(s1); i++ {
-		digit1 := int(s1[i] - '0')
+	for i := 0; i < len1; i++ {
+		digit1 := int(str1[len1-1-i] - '0')
 		digit2 := 0
-		if i < len(s2) {
-			digit2 = int(s2[i] - '0')
+		if i < len2 {
+			digit2 = int(str2[len2-1-i] - '0')
 		}
 
 		total := digit1 + digit2 + carry
@@ -40,6 +36,7 @@ func (m *MyBigNumber) Sum(str1, str2 string) string {
 
 		log.WithFields(log.Fields{
 			"step":          i + 1,
+			"position":      len1 - i,
 			"digit1":        digit1,
 			"digit2":        digit2,
 			"carry_in":      carry,
@@ -48,15 +45,18 @@ func (m *MyBigNumber) Sum(str1, str2 string) string {
 			"carry_out":     carry,
 		}).Info("Processing step")
 
-		result.WriteByte(byte(currentDigit + '0'))
+		result[currentPos] = byte(currentDigit + '0')
+		currentPos--
 	}
 
 	if carry > 0 {
 		log.WithField("final_carry", carry).Info("Adding final carry")
-		result.WriteByte(byte(carry + '0'))
+		result[currentPos] = byte(carry + '0')
+	} else {
+		result = result[1:]
 	}
 
-	finalResult := reverse(result.String())
+	finalResult := string(result)
 	log.WithFields(log.Fields{
 		"input1":       str1,
 		"input2":       str2,
@@ -64,12 +64,4 @@ func (m *MyBigNumber) Sum(str1, str2 string) string {
 	}).Info("Calculation completed")
 
 	return finalResult
-}
-
-func reverse(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	return string(runes)
 }
