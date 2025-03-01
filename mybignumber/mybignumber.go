@@ -1,11 +1,20 @@
 package mybignumber
 
 import (
-	"log"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MyBigNumber struct{}
+
+func init() {
+	// Configure logrus
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
+	log.SetLevel(log.InfoLevel)
+}
 
 func (m *MyBigNumber) Sum(str1, str2 string) string {
 	if len(str1) < len(str2) {
@@ -29,19 +38,31 @@ func (m *MyBigNumber) Sum(str1, str2 string) string {
 		currentDigit := total % 10
 		carry = total / 10
 
-		log.Printf("Step %d: %d + %d + carry(%d) = %d, write %d, carry %d",
-			i+1, digit1, digit2, carry, total, currentDigit, carry)
+		log.WithFields(log.Fields{
+			"step":          i + 1,
+			"digit1":        digit1,
+			"digit2":        digit2,
+			"carry_in":      carry,
+			"total":         total,
+			"current_digit": currentDigit,
+			"carry_out":     carry,
+		}).Info("Processing step")
 
 		result.WriteByte(byte(currentDigit + '0'))
 	}
 
 	if carry > 0 {
-		log.Printf("Final carry: %d", carry)
+		log.WithField("final_carry", carry).Info("Adding final carry")
 		result.WriteByte(byte(carry + '0'))
 	}
 
 	finalResult := reverse(result.String())
-	log.Printf("Final result: %s", finalResult)
+	log.WithFields(log.Fields{
+		"input1":       str1,
+		"input2":       str2,
+		"final_result": finalResult,
+	}).Info("Calculation completed")
+
 	return finalResult
 }
 
